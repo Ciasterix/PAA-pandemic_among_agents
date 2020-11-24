@@ -3,76 +3,119 @@ from enum import Enum
 from mesa import Agent
 
 
-class SickType(Enum):
+class State(Enum):
     HEALTHY = 0
     NO_SYMPTOMS = 1
     SYMPTOMS = 2
-    HOSPITALIZATION = 3
-    RECOVERED = 4
-    DEAD = 5
+    QUARANTINED = 3
+    HOSPITALIZATION = 4
+    RECOVERED = 5
+    DEAD = 6
 
 
 class PandemicAgent(Agent):
     def __init__(self, name, model, prob_no_symptoms, prob_symptoms,
-                 prob_hospital, prob_death, sick_time):
+                 prob_hospital, prob_death, sick_time, time_to_quarantine):
         super().__init__(name, model)
-        self.name = name  # TODO Check if line can be deleted
 
         self.prob_no_symptoms = prob_no_symptoms
         self.prob_symptoms = prob_symptoms
         self.prob_hospital = prob_hospital
         self.prob_death = prob_death
         self.sick_time = sick_time
+        self.time_to_quarantine = time_to_quarantine
 
-        self.sickness = SickType.HEALTHY
+        self.state = State.HEALTHY
         self.remaining_sick_time = 0
+        self.countdown_to_quarantine = 0
+        self.direction = self.random.choice(list(range(8)))
 
     def __move(self):
         possible_steps = self.model.grid.get_neighborhood(
-            self.pos,
-            moore=True,
-            include_center=False
-        )
-        new_position = self.random.choice(possible_steps)
-        self.model.grid.move_agent(self, new_position)
+            self.pos, moore=True, include_center=False)
+
+        if self.model.grid.is_cell_empty(possible_steps[self.direction]):
+            self.model.grid.move_agent(self, possible_steps[self.direction])
+        else:
+            random_ids = self.random.sample(list(range(8)), k=8)
+            for ri in random_ids:
+                if self.model.grid.is_cell_empty(possible_steps[ri]):
+                    self.direction = ri
+                    self.model.grid.move_agent(self, possible_steps[ri])
+
+        # new_position = self.random.choice(possible_steps)
+        # self.model.grid.move_agent(self, new_position)
 
     def step(self):
-        self.__move()
+        if self.can_move():
+            self.__move()
+        if self.can_die():
+            self.__see_whether_dies()
+        if self.can_be_quarantined():
+            self.__see_whether_goes_to_quarantine()
         if self.is_sick():
-            self.decrease_sick_time()
             neighbours = self.model.grid.get_neighbors(
-                self.pos,
-                moore=True,
-                include_center=False
-            )
+                self.pos, moore=True, include_center=False)
             for n in neighbours:
                 n.infect()
+            self.__see_whether_sickness_ends()
 
-    def decrease_sick_time(self):  # TODO Find better name for this function
+    def __see_whether_sickness_ends(self):
         self.remaining_sick_time = max(self.remaining_sick_time - 1, 0)
         if self.remaining_sick_time == 0:
-            self.sickness = SickType.RECOVERED
+            self.state = State.RECOVERED
+
+    def __see_whether_goes_to_quarantine(self):
+        self.countdown_to_quarantine = max(self.countdown_to_quarantine - 1, 0)
+        if self.state == State.SYMPTOMS:
+            if self.countdown_to_quarantine == 0:
+                self.state = State.QUARANTINED
+
+    def __see_whether_dies(self):
+        rand_val = self.model.random.uniform(0, 1)
+        if rand_val < self.prob_death:
+            self.state = State.DEAD
 
     def is_sick(self):
-        return (self.sickness == SickType.NO_SYMPTOMS or
-                self.sickness == SickType.SYMPTOMS or
-                self.sickness == SickType.HOSPITALIZATION)
+        return (self.state == State.NO_SYMPTOMS or
+                self.state == State.SYMPTOMS or
+                self.state == State.HOSPITALIZATION)
 
     def was_sick(self):
-        return (self.sickness == SickType.RECOVERED or
-                self.sickness == SickType.DEAD)
+        return (self.state == State.RECOVERED or
+                self.state == State.DEAD)
+
+    def can_move(self):
+        return not (self.state == State.QUARANTINED or
+                    self.state == State.HOSPITALIZATION or
+                    self.state == State.DEAD)
+
+    def can_die(self):
+        return (self.state == State.SYMPTOMS or
+                self.state == State.QUARANTINED or
+                self.state == State.HOSPITALIZATION)
+
+    def is_hospitalized(self):
+        return self.state == State.HOSPITALIZATION
+
+    def can_be_quarantined(self):
+        return self.state == State.SYMPTOMS
 
     def infect(self, force=False):  # TODO Maybe there is a better name
         if force:
-            self.sickness = SickType.NO_SYMPTOMS
+            self.state = State.NO_SYMPTOMS
             self.remaining_sick_time = self.sick_time
         elif not self.is_sick() and not self.was_sick():
             rand_val = self.model.random.uniform(0, 1)
             if rand_val < self.prob_no_symptoms:
-                self.sickness = SickType.NO_SYMPTOMS
+                self.state = State.NO_SYMPTOMS
             elif rand_val < self.prob_no_symptoms + self.prob_symptoms:
-                self.sickness = SickType.SYMPTOMS
-            elif rand_val < (self.prob_no_symptoms +
-                             self.prob_symptoms + self.prob_hospital):
-                self.sickness = SickType.HOSPITALIZATION
+                self.state = State.SYMPTOMS
+                self.countdown_to_quarantine = self.time_to_quarantine
+            elif rand_val < (self.prob_no_symptoms + self.prob_symptoms
+                             + self.prob_hospital):
+                if self.model.is_below_the_limit_of_hospitalized():
+                    self.state = State.HOSPITALIZATION
+                else:
+                    self.state = State.DEAD
             self.remaining_sick_time = self.sick_time

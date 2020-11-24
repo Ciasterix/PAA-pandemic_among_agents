@@ -1,6 +1,6 @@
 from mesa import Model
 from mesa.time import RandomActivation
-from mesa.space import MultiGrid
+from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
 
 from agent import PandemicAgent
@@ -19,6 +19,7 @@ class PandemicModel(Model):
             prob_hospitalization,
             prob_death,
             sick_time,
+            time_to_quarantine,
             hospitalization_limit
     ):
         super().__init__()
@@ -26,7 +27,7 @@ class PandemicModel(Model):
         self.num_sick = num_sick
         # TODO Change to mesa.space.SingleGrid
         # which strictly enforces one object per cell
-        self.grid = MultiGrid(width, height, True)
+        self.grid = SingleGrid(width, height, torus=True)
         self.schedule = RandomActivation(self)
         self.running = True
 
@@ -42,6 +43,7 @@ class PandemicModel(Model):
                 prob_hospital=prob_hospitalization,
                 prob_death=prob_death,
                 sick_time=sick_time,
+                time_to_quarantine=time_to_quarantine
             )
             # Force infection of first >>num_sick<< agents
             if i < self.num_sick:
@@ -50,18 +52,26 @@ class PandemicModel(Model):
             self.__place_randomly_on_grid(a)
 
         self.data_collector = DataCollector(
-            model_reporters={"Sick": self.compute_sick})
+            model_reporters={"Sick": self.count_sick})
 
     # TODO Place only in unique cells
     def __place_randomly_on_grid(self, agent):
-        x = self.random.randrange(self.grid.width)
-        y = self.random.randrange(self.grid.height)
-        self.grid.place_agent(agent, (x, y))
+        # x = self.random.randrange(self.grid.width)
+        # y = self.random.randrange(self.grid.height)
+        # self.grid.place_agent(agent, (x, y))
+        self.grid.position_agent(agent)
 
     def step(self):
         self.data_collector.collect(self)
         self.schedule.step()
 
-    def compute_sick(self, _):  # TODO check if parameter can be deleted
+    def is_below_the_limit_of_hospitalized(self):
+        return self.count_hospitalized(None) < self.hospitalization_limit
+
+    def count_sick(self, _):
         sick_agents = [a.is_sick() for a in self.schedule.agents]
+        return sum(sick_agents) / len(self.schedule.agents)
+
+    def count_hospitalized(self, _):
+        sick_agents = [a.is_hospitalized() for a in self.schedule.agents]
         return sum(sick_agents) / len(self.schedule.agents)

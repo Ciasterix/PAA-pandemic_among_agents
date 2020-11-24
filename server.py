@@ -5,7 +5,7 @@ from mesa.visualization.modules.ChartVisualization import ChartModule
 from mesa.visualization.modules import TextElement
 
 from model import PandemicModel
-from agent import SickType
+from agent import State
 
 
 # TODO create element to show number of agent of each type
@@ -24,58 +24,58 @@ from agent import SickType
 def agent_portrayal(agent):
     portrayal = {"Shape": "circle",
                  "Filled": "true",
-                 "r": 0.5}
+                 "r": 0.6,
+                 "Layer": 1}
 
     # HTML color names: https://www.w3schools.com/colors/colors_names.asp
-    if agent.sickness == SickType.HEALTHY:
-        portrayal["Color"] = "Chartreuse"  # green
-        portrayal["Layer"] = 1
-    if agent.sickness == SickType.NO_SYMPTOMS:
+    if agent.state == State.HEALTHY:
+        portrayal["Color"] = "Chartreuse"  # light green
+    elif agent.state == State.NO_SYMPTOMS:
         portrayal["Color"] = "orange"
-        portrayal["Layer"] = 0
-    elif agent.sickness == SickType.SYMPTOMS:
+    elif agent.state == State.SYMPTOMS:
         portrayal["Color"] = "red"
-        portrayal["Layer"] = 1
-    elif agent.sickness == SickType.HOSPITALIZATION:
+    elif agent.state == State.QUARANTINED:
+        portrayal["Color"] = "yellow"
+    elif agent.state == State.HOSPITALIZATION:
         portrayal["Color"] = "purple"
-        portrayal["Layer"] = 1
-    elif agent.sickness == SickType.RECOVERED:
-        portrayal["Color"] = "blue"
-        portrayal["Layer"] = 1
-    elif agent.sickness == SickType.DEAD:
+    elif agent.state == State.RECOVERED:
+        portrayal["Color"] = "cyan"
+    elif agent.state == State.DEAD:
         portrayal["Color"] = "grey"
-        portrayal["Layer"] = 1
+
     return portrayal
 
 
 model_params = {
     # "N": UserSettableParameter("checkbox", "Grass Enabled", True),
     "num_agents": UserSettableParameter(
-        "slider", "Number of agents", 20, 1, 625
+        "slider", "Number of agents", 50, 1, 625
     ),
     "num_sick": UserSettableParameter(
-            "slider", "Number of agents SIck from the beginning", 1, 1, 625
+        "slider", "Number of agents sick from the beginning", 1, 1, 625
     ),
     "width": UserSettableParameter("slider", "Grid Width", 25, 5, 25),
     "height": UserSettableParameter("slider", "Grid Height", 25, 5, 25),
-
     "sick_time": UserSettableParameter(
-        "slider", "Sickness time", 20, 1, 100
+        "slider", "Sickness time", 20, 1, 50
+    ),
+    "time_to_quarantine": UserSettableParameter(
+        "slider", "Time before someone is quarantined", 10, 0, 50
     ),
     "prob_no_symptoms": UserSettableParameter(
-        "slider", "Probability of sickness without symptoms", 0.1, 0.1, 1.0, 0.1
+        "slider", "Probability of infection without symptoms", 0.1, 0.0, 1.0, 0.01
     ),
     "prob_symptoms": UserSettableParameter(
-        "slider", "Probability of sickness with symptoms", 0.1, 0.1, 1.0, 0.1
+        "slider", "Probability of infection with symptoms", 0.1, 0.0, 1.0, 0.01
     ),
     "prob_hospitalization": UserSettableParameter(
-        "slider", "Probability of hospitalization", 0.1, 0.1, 1.0, 0.1
+        "slider", "Probability of hospitalization", 0.1, 0.0, 1.0, 0.01
     ),
     "prob_death": UserSettableParameter(
-        "slider", "Probability of death", 0.1, 0.1, 1.0, 0.1
+        "slider", "Probability of death", 0.1, 0.0, 1.0, 0.01
     ),
     "hospitalization_limit": UserSettableParameter(
-        "slider", "Maximum number of hospitalizations", 50, 10, 300
+        "slider", "Maximum number of hospitalizations", 5, 0, 100
     )
 }
 
