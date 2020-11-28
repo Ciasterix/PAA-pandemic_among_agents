@@ -1,7 +1,9 @@
+import random
+
 from mesa import Model
-from mesa.time import RandomActivation
-from mesa.space import SingleGrid
 from mesa.datacollection import DataCollector
+from mesa.space import SingleGrid
+from mesa.time import RandomActivation
 
 from agent import PandemicAgent
 
@@ -20,7 +22,10 @@ class PandemicModel(Model):
             prob_death,
             sick_time,
             time_to_quarantine,
-            hospitalization_limit
+            hospitalization_limit,
+            vaccination,
+            vaccination_delay,
+            vaccination_rate
     ):
         super().__init__()
         self.num_agents = num_agents
@@ -32,6 +37,11 @@ class PandemicModel(Model):
         self.running = True
 
         self.hospitalization_limit = hospitalization_limit
+
+        self.vaccination = vaccination
+        self._vaccination = False
+        self.vaccination_delay = vaccination_delay
+        self.vaccination_rate = vaccination_rate
 
         #  Create agents
         for i in range(self.num_agents):
@@ -64,6 +74,8 @@ class PandemicModel(Model):
     def step(self):
         self.data_collector.collect(self)
         self.schedule.step()
+        if self.is_vaccination_launched():
+            self.vaccinate()
 
     def is_below_the_limit_of_hospitalized(self):
         return self.count_hospitalized(None) < self.hospitalization_limit
@@ -75,3 +87,28 @@ class PandemicModel(Model):
     def count_hospitalized(self, _):
         sick_agents = [a.is_hospitalized() for a in self.schedule.agents]
         return sum(sick_agents) / len(self.schedule.agents)
+
+    def count_vaccinated(self):
+        vaccinated_agents = [a.is_vaccinated() for a in self.schedule.agents]
+        return sum(vaccinated_agents) / len(self.schedule.agents)
+
+    def start_vaccination(self):
+        if self.vaccination:
+            self._vaccination = True
+
+    def is_vaccination_launched(self):
+        if self._vaccination:
+            return True
+        elif self.schedule.steps > self.vaccination_delay:
+            self.start_vaccination()
+            return True
+        return False
+
+    def vaccinate(self):
+        not_sick_agents = [a for a in self.schedule.agents if
+                           a.can_be_vaccinated()]
+        agents_to_vaccinate = random.sample(not_sick_agents,
+                                            min(len(not_sick_agents),
+                                                self.vaccination_rate))
+        for agent in agents_to_vaccinate:
+            agent.vaccinate()
