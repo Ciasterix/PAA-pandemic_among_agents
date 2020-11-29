@@ -108,7 +108,7 @@ class PandemicAgent(Agent):
     def can_be_quarantined(self):
         return self.state == State.SYMPTOMS
 
-    def infect(self, force=False):  # TODO Maybe there is a better name
+    def infect(self, force=False):
         if force:
             self.state = State.NO_SYMPTOMS
             self.remaining_sick_time = self.sick_time
