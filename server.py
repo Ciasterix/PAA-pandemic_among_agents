@@ -1,11 +1,10 @@
+from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
 from mesa.visualization.modules import CanvasGrid
-from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules.ChartVisualization import ChartModule
-from mesa.visualization.modules import TextElement
 
-from model import PandemicModel
 from agent import State
+from model import PandemicModel
 
 
 # TODO create element to show number of agent of each type
@@ -42,6 +41,8 @@ def agent_portrayal(agent):
         portrayal["Color"] = "cyan"
     elif agent.state == State.DEAD:
         portrayal["Color"] = "grey"
+    elif agent.state == State.VACCINATED:
+        portrayal["Color"] = "DarkGreen"
 
     return portrayal
 
@@ -76,7 +77,17 @@ model_params = {
     ),
     "hospitalization_limit": UserSettableParameter(
         "slider", "Maximum number of hospitalizations", 5, 0, 100
+    ),
+    "vaccination": UserSettableParameter(
+        "checkbox", "Vaccination Enabled", True
+    ),
+    "vaccination_delay": UserSettableParameter(
+        "slider", "Delay of the Vaccine lunch", 200, 0, 1000
+    ),
+    "vaccination_rate": UserSettableParameter(
+        "slider", "Rate of the vaccination", 10, 0, 100
     )
+
 }
 
 chart = ChartModule(

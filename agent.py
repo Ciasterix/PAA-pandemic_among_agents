@@ -10,7 +10,8 @@ class State(Enum):
     QUARANTINED = 3
     HOSPITALIZATION = 4
     RECOVERED = 5
-    DEAD = 6
+    VACCINATED = 6
+    DEAD = 7
 
 
 class PandemicAgent(Agent):
@@ -81,6 +82,9 @@ class PandemicAgent(Agent):
                 self.state == State.SYMPTOMS or
                 self.state == State.HOSPITALIZATION)
 
+    def is_vaccinated(self):
+        return self.state == State.VACCINATED
+
     def was_sick(self):
         return (self.state == State.RECOVERED or
                 self.state == State.DEAD)
@@ -95,6 +99,9 @@ class PandemicAgent(Agent):
                 self.state == State.QUARANTINED or
                 self.state == State.HOSPITALIZATION)
 
+    def can_be_vaccinated(self):
+        return not self.is_sick() and not self.was_sick() and not self.state == State.VACCINATED
+
     def is_hospitalized(self):
         return self.state == State.HOSPITALIZATION
 
@@ -105,7 +112,7 @@ class PandemicAgent(Agent):
         if force:
             self.state = State.NO_SYMPTOMS
             self.remaining_sick_time = self.sick_time
-        elif not self.is_sick() and not self.was_sick():
+        elif not self.is_sick() and not self.was_sick() and not self.is_vaccinated():
             rand_val = self.model.random.uniform(0, 1)
             if rand_val < self.prob_no_symptoms:
                 self.state = State.NO_SYMPTOMS
@@ -119,3 +126,6 @@ class PandemicAgent(Agent):
                 else:
                     self.state = State.DEAD
             self.remaining_sick_time = self.sick_time
+
+    def vaccinate(self):
+        self.state = State.VACCINATED
