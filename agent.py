@@ -44,9 +44,6 @@ class PandemicAgent(Agent):
                     self.direction = ri
                     self.model.grid.move_agent(self, possible_steps[ri])
 
-        # new_position = self.random.choice(possible_steps)
-        # self.model.grid.move_agent(self, new_position)
-
     def step(self):
         if self.can_move():
             self.__move()
@@ -54,7 +51,7 @@ class PandemicAgent(Agent):
             self.__see_whether_dies()
         if self.can_be_quarantined():
             self.__see_whether_goes_to_quarantine()
-        if self.is_sick():
+        if self.can_infect_others():
             neighbours = self.model.grid.get_neighbors(
                 self.pos, moore=True, include_center=False)
             for n in neighbours:
@@ -80,6 +77,7 @@ class PandemicAgent(Agent):
     def is_sick(self):
         return (self.state == State.NO_SYMPTOMS or
                 self.state == State.SYMPTOMS or
+                self.state == State.QUARANTINED or
                 self.state == State.HOSPITALIZATION)
 
     def is_vaccinated(self):
@@ -88,6 +86,15 @@ class PandemicAgent(Agent):
     def was_sick(self):
         return (self.state == State.RECOVERED or
                 self.state == State.DEAD)
+
+    def can_infect_others(self):
+        return (self.state == State.NO_SYMPTOMS or
+                self.state == State.SYMPTOMS)
+
+    def can_be_infected(self):
+        return (not self.is_sick() and
+                not self.was_sick() and
+                not self.is_vaccinated())
 
     def can_move(self):
         return not (self.state == State.QUARANTINED or
@@ -100,7 +107,9 @@ class PandemicAgent(Agent):
                 self.state == State.HOSPITALIZATION)
 
     def can_be_vaccinated(self):
-        return not self.is_sick() and not self.was_sick() and not self.state == State.VACCINATED
+        return (not self.is_sick() and
+                not self.was_sick() and
+                not self.state == State.VACCINATED)
 
     def is_hospitalized(self):
         return self.state == State.HOSPITALIZATION
@@ -112,7 +121,7 @@ class PandemicAgent(Agent):
         if force:
             self.state = State.NO_SYMPTOMS
             self.remaining_sick_time = self.sick_time
-        elif not self.is_sick() and not self.was_sick() and not self.is_vaccinated():
+        elif self.can_be_infected():
             rand_val = self.model.random.uniform(0, 1)
             if rand_val < self.prob_no_symptoms:
                 self.state = State.NO_SYMPTOMS
