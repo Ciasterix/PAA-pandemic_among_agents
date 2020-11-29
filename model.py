@@ -79,8 +79,8 @@ class PandemicModel(Model):
         return sum(sick_agents) / len(self.schedule.agents)
 
     def count_hospitalized(self, _):
-        sick_agents = [a.is_hospitalized() for a in self.schedule.agents]
-        return sum(sick_agents) / len(self.schedule.agents)
+        hospitalized_agents = [a.is_hospitalized() for a in self.schedule.agents]
+        return sum(hospitalized_agents)
 
     def count_vaccinated(self):
         vaccinated_agents = [a.is_vaccinated() for a in self.schedule.agents]
