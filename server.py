@@ -1,23 +1,24 @@
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
-from mesa.visualization.modules import CanvasGrid
+from mesa.visualization.modules import CanvasGrid, TextElement
 from mesa.visualization.modules.ChartVisualization import ChartModule
 
 from agent import State
 from model import PandemicModel
 
 
-# TODO create element to show number of agent of each type
-# class CustomTextElement(TextElement):
-#     """
-#     Display a text count of how many happy agents there are.
-#     """
-#
-#     def __init__(self, data_collector_name='data_collector'):
-#         pass
-#
-#     def render(self, model):
-#         return "Happy agents: " + str(model.happy)
+class CustomTextElement(TextElement):
+    """
+    Display a text count of how many agents with specific state there are.
+    """
+
+    def __init__(self, agent_type):
+        self.agent_type = agent_type
+
+    def render(self, model):
+        message = f"Percent of agents in the {self.agent_type.name} state: "
+        perc = model.count_one_type_of_agents(self.agent_type)
+        return message + f"{perc:.2}"
 
 
 def agent_portrayal(agent):
@@ -87,7 +88,6 @@ model_params = {
     "vaccination_rate": UserSettableParameter(
         "slider", "Rate of the vaccination", 10, 0, 100
     )
-
 }
 
 chart = ChartModule(
@@ -96,5 +96,9 @@ chart = ChartModule(
 
 grid = CanvasGrid(agent_portrayal, 25, 25, 500, 500)
 
+txt_elem_list = [CustomTextElement(agent_type) for agent_type in State]
+
+elements = [grid, chart] + txt_elem_list
+
 server = ModularServer(
-    PandemicModel, [grid, chart], "Pandemic Model", model_params)
+    PandemicModel, elements, "Pandemic Model", model_params)
