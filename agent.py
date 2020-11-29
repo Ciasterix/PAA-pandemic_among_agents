@@ -15,8 +15,17 @@ class State(Enum):
 
 
 class PandemicAgent(Agent):
-    def __init__(self, name, model, prob_no_symptoms, prob_symptoms,
-                 prob_hospital, prob_death, sick_time, time_to_quarantine):
+    def __init__(
+            self,
+            name,
+            model,
+            prob_no_symptoms,
+            prob_symptoms,
+            prob_hospital,
+            prob_death,
+            sick_time,
+            time_to_quarantine,
+            time_before_death):
         super().__init__(name, model)
 
         self.prob_no_symptoms = prob_no_symptoms
@@ -25,6 +34,7 @@ class PandemicAgent(Agent):
         self.prob_death = prob_death
         self.sick_time = sick_time
         self.time_to_quarantine = time_to_quarantine
+        self.time_before_death = time_before_death
 
         self.state = State.HEALTHY
         self.remaining_sick_time = 0
@@ -48,6 +58,10 @@ class PandemicAgent(Agent):
         if self.can_move():
             self.__move()
         if self.can_die():
+            print(self.state)
+            print(self.state)
+            print(self.state)
+
             self.__see_whether_dies()
         if self.can_be_quarantined():
             self.__see_whether_goes_to_quarantine()
@@ -56,6 +70,7 @@ class PandemicAgent(Agent):
                 self.pos, moore=True, include_center=False)
             for n in neighbours:
                 n.infect()
+        if self.is_sick():
             self.__see_whether_sickness_ends()
 
     def __see_whether_sickness_ends(self):
@@ -102,9 +117,10 @@ class PandemicAgent(Agent):
                     self.state == State.DEAD)
 
     def can_die(self):
-        return (self.state == State.SYMPTOMS or
+        return ((self.state == State.SYMPTOMS or
                 self.state == State.QUARANTINED or
-                self.state == State.HOSPITALIZATION)
+                self.state == State.HOSPITALIZATION) and
+                self.time_before_death == self.remaining_sick_time)
 
     def can_be_vaccinated(self):
         return (not self.is_sick() and

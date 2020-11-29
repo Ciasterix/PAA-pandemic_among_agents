@@ -13,12 +13,13 @@ class CustomTextElement(TextElement):
     """
 
     def __init__(self, agent_type):
+        super().__init__()
         self.agent_type = agent_type
 
     def render(self, model):
         message = f"Percent of agents in the {self.agent_type.name} state: "
-        perc = model.count_one_type_of_agents(self.agent_type)
-        return message + f"{perc:.2}"
+        perc = model.count_one_type_of_agents(self.agent_type) * 100
+        return message + f"{perc:.4}"
 
 
 def agent_portrayal(agent):
@@ -49,9 +50,8 @@ def agent_portrayal(agent):
 
 
 model_params = {
-    # "N": UserSettableParameter("checkbox", "Grass Enabled", True),
     "num_agents": UserSettableParameter(
-        "slider", "Number of agents", 50, 1, 625
+        "slider", "Number of agents", 250, 1, 625
     ),
     "num_sick": UserSettableParameter(
         "slider", "Number of agents sick from the beginning", 1, 1, 625
@@ -63,6 +63,9 @@ model_params = {
     ),
     "time_to_quarantine": UserSettableParameter(
         "slider", "Time before someone is quarantined", 10, 0, 50
+    ),
+    "time_before_death": UserSettableParameter(
+        "slider", "After how many steps of sickness agent can die", 10, 0, 50
     ),
     "prob_no_symptoms": UserSettableParameter(
         "slider", "Probability of infection without symptoms", 0.1, 0.0, 1.0, 0.01
@@ -77,7 +80,7 @@ model_params = {
         "slider", "Probability of death", 0.1, 0.0, 1.0, 0.01
     ),
     "hospitalization_limit": UserSettableParameter(
-        "slider", "Maximum number of hospitalizations", 5, 0, 100
+        "slider", "Maximum number of hospitalizations", 5, 0, 200
     ),
     "vaccination": UserSettableParameter(
         "checkbox", "Vaccination Enabled", True

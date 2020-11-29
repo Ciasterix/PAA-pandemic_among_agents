@@ -25,7 +25,8 @@ class PandemicModel(Model):
             hospitalization_limit,
             vaccination,
             vaccination_delay,
-            vaccination_rate
+            vaccination_rate,
+            time_before_death
     ):
         super().__init__()
         self.num_agents = num_agents
@@ -51,7 +52,8 @@ class PandemicModel(Model):
                 prob_hospital=prob_hospitalization,
                 prob_death=prob_death,
                 sick_time=sick_time,
-                time_to_quarantine=time_to_quarantine
+                time_to_quarantine=time_to_quarantine,
+                time_before_death=time_before_death
             )
             # Force infection of first >>num_sick<< agents
             if i < self.num_sick:
@@ -99,13 +101,11 @@ class PandemicModel(Model):
             return True
         elif self.schedule.steps > self.vaccination_delay:
             self.start_vaccination()
-            return True
         return False
 
     def vaccinate(self):
         not_sick_agents = [
-            a for a in self.schedule.agents
-            if a.can_be_vaccinated()]
+            a for a in self.schedule.agents if a.can_be_vaccinated()]
         agents_to_vaccinate = random.sample(
             not_sick_agents, min(len(not_sick_agents), self.vaccination_rate))
         for agent in agents_to_vaccinate:
