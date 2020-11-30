@@ -51,18 +51,18 @@ def agent_portrayal(agent):
 
 model_params = {
     "num_agents": UserSettableParameter(
-        "slider", "Number of agents", 250, 1, 625
+        "slider", "Number of agents", 100, 1, 625
     ),
     "num_sick": UserSettableParameter(
-        "slider", "Number of agents sick from the beginning", 1, 1, 625
+        "slider", "Number of agents sick from the beginning", 1, 1, 50
     ),
     "width": UserSettableParameter("slider", "Grid Width", 25, 5, 25),
     "height": UserSettableParameter("slider", "Grid Height", 25, 5, 25),
     "sick_time": UserSettableParameter(
-        "slider", "Sickness time", 20, 1, 50
+        "slider", "Sickness time", 15, 1, 50
     ),
     "time_to_quarantine": UserSettableParameter(
-        "slider", "Time before someone is quarantined", 10, 0, 50
+        "slider", "After how many steps of sickness agent is quarantined", 10, 0, 50
     ),
     "time_before_death": UserSettableParameter(
         "slider", "After how many steps of sickness agent can die", 10, 0, 50
@@ -74,7 +74,7 @@ model_params = {
         "slider", "Probability of infection with symptoms", 0.1, 0.0, 1.0, 0.01
     ),
     "prob_hospitalization": UserSettableParameter(
-        "slider", "Probability of hospitalization", 0.1, 0.0, 1.0, 0.01
+        "slider", "Probability of hospitalization", 0.01, 0.0, 1.0, 0.01
     ),
     "prob_death": UserSettableParameter(
         "slider", "Probability of death", 0.1, 0.0, 1.0, 0.01
@@ -83,7 +83,7 @@ model_params = {
         "slider", "Maximum number of hospitalizations", 5, 0, 200
     ),
     "vaccination": UserSettableParameter(
-        "checkbox", "Vaccination Enabled", True
+        "checkbox", "Vaccination Enabled", False
     ),
     "vaccination_delay": UserSettableParameter(
         "slider", "Delay of the Vaccine lunch", 200, 0, 1000

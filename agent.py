@@ -58,10 +58,6 @@ class PandemicAgent(Agent):
         if self.can_move():
             self.__move()
         if self.can_die():
-            print(self.state)
-            print(self.state)
-            print(self.state)
-
             self.__see_whether_dies()
         if self.can_be_quarantined():
             self.__see_whether_goes_to_quarantine()
